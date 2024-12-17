@@ -1,0 +1,53 @@
+{
+  "name": "gatsby-plugin-strava",
+  "version": "0.1.0",
+  "description": "Gatsby plugin to add tiles to your Strava activities",
+  "repository": "https://github.com/cedricdelpoux/gatsby-plugin-strava",
+  "author": "Cédric Delpoux",
+  "license": "MIT",
+  "private": false,
+  "keywords": [
+    "gatsby",
+    "gatsby-plugin",
+    "strava",
+    "tiles"
+  ],
+  "main": "index.js",
+  "files": [
+    "gatsby-node.js",
+    "utils"
+  ],
+  "dependencies": {
+    "@mapbox/polyline": "^1.2.1",
+    "@turf/midpoint": "^7.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.2.0",
+    "eslint-config-prettier": "^8.3.0",
+    "husky": "^4.3.0",
+    "lint-staged": "^11.2.6",
+    "prettier": "2.4.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "peerDependencies": {
+    "gatsby": ">=3.0.0"
+  },
+  "scripts": {
+    "lint": "eslint *.js gatsby-node.js utils example/src",
+    "prepublishOnly": "yarn lint"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint"
+    ],
+    "*.{css,js,md}": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  }
+}

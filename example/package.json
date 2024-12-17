@@ -1,0 +1,25 @@
+{
+  "name": "gatsby-source-strava-example",
+  "private": true,
+  "scripts": {
+    "build": "gatsby build",
+    "clean": "gatsby clean",
+    "dev": "gatsby develop",
+    "serve": "gatsby serve",
+    "strava-token": "gatsby-source-strava-token"
+  },
+  "dependencies": {
+    "@mapbox/polyline": "^1.2.1",
+    "@urbica/react-map-gl": "^1.16.2",
+    "dotenv": "^8.2.0",
+    "gatsby": "5.14.0",
+    "gatsby-source-strava": "^2.2.0",
+    "mapbox-gl": "^3.8.0",
+    "react": "link:../node_modules/react",
+    "react-dom": "link:../node_modules/react-dom"
+  },
+  "devDependencies": {
+    "eslint-plugin-react": "^7.37.2",
+    "prettier": "3.4.1"
+  }
+}
