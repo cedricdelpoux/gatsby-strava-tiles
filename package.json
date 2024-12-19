@@ -27,11 +27,12 @@
     "husky": "^4.3.0",
     "lint-staged": "^11.2.6",
     "prettier": "2.4.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "peerDependencies": {
-    "gatsby": ">=3.0.0"
+    "gatsby": ">=3.0.0",
+    "gatsby-source-strava": "^2.4.1"
   },
   "scripts": {
     "lint": "eslint *.js gatsby-node.js utils example/src",

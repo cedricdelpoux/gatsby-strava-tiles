@@ -1,4 +1,4 @@
-const {lngToX, latToY, xToLng, yToLat, Z} = require("./map")
+const {demultiplyPoints, lngToX, latToY, xToLng, yToLat, Z} = require("./map")
 const {rangeArray} = require("./utils")
 
 function areTilesSame(tile1, tile2) {
@@ -13,11 +13,11 @@ function distinctTiles(tiles) {
   return (tile) => !tiles.find((tile2) => areTilesSame(tile, tile2))
 }
 
-function tileToCoords({x, y}) {
-  const topLat = yToLat(y, Z)
+function tileToCoords({x, y, size = 1}) {
   const topLng = xToLng(x, Z)
-  const bottomLat = yToLat(y + 1, Z)
-  const bottomLng = xToLng(x + 1, Z)
+  const topLat = yToLat(y, Z)
+  const bottomLng = xToLng(x + size, Z)
+  const bottomLat = yToLat(y + size, Z)
 
   return [
     [bottomLng, bottomLat],
@@ -28,9 +28,10 @@ function tileToCoords({x, y}) {
   ]
 }
 
-function pointsToTiles(points) {
-  return points
-    .map(([lat, lng]) => {
+function pointsToTiles(points, demultiply) {
+  const coordinates = demultiply ? demultiplyPoints(points) : points
+  return coordinates
+    .map(([lng, lat]) => {
       const x = lngToX(lng)
       const y = latToY(lat)
       return {
@@ -42,7 +43,7 @@ function pointsToTiles(points) {
     .filter(uniqueTiles)
 }
 
-function getTilesFromSquare(square) {
+function getSquareTiles(square) {
   const tiles = []
 
   for (let x = square.x; x < square.x + square.size; x++) {
@@ -51,10 +52,24 @@ function getTilesFromSquare(square) {
     }
   }
 
-  return tiles
+  return tiles.filter(uniqueTiles)
 }
 
-function getSquareTiles(tiles) {
+function getSquareBorder(square) {
+  const x = square.x
+  const y = square.y
+  const x2 = square.x + square.size
+  const y2 = square.y + square.size
+  return {
+    x,
+    y,
+    x2,
+    y2,
+    coords: tileToCoords({x, y, size: square.size}),
+  }
+}
+
+function getSquare(tiles) {
   const tilesSet = new Set(tiles.map((tile) => `${tile.x}-${tile.y}`))
   let maxSquare = {size: 0}
 
@@ -80,11 +95,67 @@ function getSquareTiles(tiles) {
     }
   })
 
-  return getTilesFromSquare(maxSquare)
+  return {
+    size: maxSquare.size,
+    tiles: getSquareTiles(maxSquare),
+    border: getSquareBorder(maxSquare),
+  }
+}
+
+function getCluster(tiles) {
+  const tilesSet = new Set(tiles.map((tile) => `${tile.x}-${tile.y}`))
+  const cluster = []
+
+  tiles.forEach(({x, y, coords}) => {
+    if (
+      tilesSet.has(`${x - 1}-${y}`) &&
+      tilesSet.has(`${x + 1}-${y}`) &&
+      tilesSet.has(`${x}-${y - 1}`) &&
+      tilesSet.has(`${x}-${y + 1}`)
+    ) {
+      cluster.push({x, y, coords})
+    }
+  })
+
+  return cluster
+}
+
+function getMonthly(tilesByMonth) {
+  return Object.keys(tilesByMonth).reduce((acc, yearMonth) => {
+    const tiles = tilesByMonth[yearMonth]
+    const oldTiles = tiles.old
+    const newTiles = tiles.new
+    const allTiles = [...oldTiles, ...newTiles]
+    const square = getSquare(allTiles)
+    const cluster = getCluster(allTiles)
+    acc.push({
+      yearMonth,
+      year: yearMonth.substring(0, 4),
+      month: yearMonth.substring(5, 7),
+      tiles: {
+        all: allTiles,
+        new: newTiles,
+        old: oldTiles,
+        parts: {
+          squareBorder: square.border,
+          squareSize: square.size,
+          square: square.tiles,
+          cluster: allTiles.filter(distinctTiles(square.tiles)),
+          rest: allTiles.filter(distinctTiles([...square.tiles, ...cluster])),
+          old: oldTiles.filter(distinctTiles(square.tiles)),
+          new: newTiles.filter(distinctTiles(square.tiles)),
+        },
+      },
+    })
+
+    return acc
+  }, [])
 }
 
 module.exports = {
-  getSquareTiles,
+  getCluster,
+  getSquare,
+  getMonthly,
   uniqueTiles,
   distinctTiles,
   pointsToTiles,

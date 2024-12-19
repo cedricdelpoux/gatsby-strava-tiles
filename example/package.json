@@ -9,11 +9,10 @@
     "strava-token": "gatsby-source-strava-token"
   },
   "dependencies": {
-    "@mapbox/polyline": "^1.2.1",
     "@urbica/react-map-gl": "^1.16.2",
     "dotenv": "^8.2.0",
     "gatsby": "5.14.0",
-    "gatsby-source-strava": "^2.2.0",
+    "gatsby-source-strava": "^2.4.1",
     "mapbox-gl": "^3.8.0",
     "react": "link:../node_modules/react",
     "react-dom": "link:../node_modules/react-dom"

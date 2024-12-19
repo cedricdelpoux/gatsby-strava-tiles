@@ -1,30 +1,25 @@
-const {getSquareTiles, distinctTiles, uniqueTiles} = require("./tiles")
+const {getSquare, getCluster, getMonthly, distinctTiles} = require("./tiles.js")
 
-function getAthleteTiles(athlete, globalTiles, globalTilesByMonth) {
-  const athleteSquare = getSquareTiles(globalTiles)
-  console.log("athleteSquare", athleteSquare.length)
-  const athleteTiles = globalTiles.filter(distinctTiles(athleteSquare))
-  const athleteTilesByMonth = Object.keys(globalTilesByMonth).reduce(
-    (acc, yearMonth) => {
-      const monthTiles = globalTilesByMonth[yearMonth].filter(uniqueTiles)
-      const monthSquare = getSquareTiles(monthTiles)
-      acc.push({
-        year: yearMonth.substring(0, 4),
-        month: yearMonth.substring(5, 7),
-        square: monthSquare,
-        tiles: monthTiles.filter(distinctTiles(monthSquare)),
-      })
+function getAthleteTiles(tiles, tilesByMonth) {
+  const square = getSquare(tiles)
+  const cluster = getCluster(tiles)
+  const monthly = getMonthly(tilesByMonth)
 
-      return acc
+  const athleteTiles = {
+    all: tiles,
+    square: square.tiles,
+    cluster,
+    parts: {
+      squareBorder: square.border,
+      squareSize: square.size,
+      square: square.tiles,
+      cluster: cluster.filter(distinctTiles(square.tiles)),
+      rest: tiles.filter(distinctTiles([...square.tiles, ...cluster])),
     },
-    []
-  )
-
-  return {
-    square: athleteSquare,
-    tiles: athleteTiles,
-    tilesByMonth: athleteTilesByMonth,
+    monthly,
   }
+
+  return athleteTiles
 }
 
 module.exports = {

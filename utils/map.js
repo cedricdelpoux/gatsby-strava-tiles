@@ -1,4 +1,3 @@
-const polyline = require("@mapbox/polyline")
 const {midpoint} = require("@turf/midpoint")
 const {roundTo5Decimals} = require("./utils")
 
@@ -33,7 +32,7 @@ function getMidpoint(point1, point2) {
   return midpoint(point1, point2).geometry.coordinates.map(roundTo5Decimals)
 }
 
-function demultiplyPoints(prevPoint, point) {
+function demultiplyPoint(prevPoint, point) {
   const point4_8 = getMidpoint(prevPoint, point)
   const point2_8 = getMidpoint(prevPoint, point4_8)
   const point1_8 = getMidpoint(prevPoint, point2_8)
@@ -54,11 +53,15 @@ function demultiplyPoints(prevPoint, point) {
   ]
 }
 
-function polylineToPoints(mapPolyline, demultiply = false) {
-  return polyline.decode(mapPolyline).reduce((acc, point, index, array) => {
-    if (demultiply && index > 0) {
+function normalizePoints(points) {
+  return points.map(([lat, lng]) => [lng, lat])
+}
+
+function demultiplyPoints(points) {
+  return points.reduce((acc, point, index, array) => {
+    if (index > 0) {
       // Demultiply to create more points on a straight line
-      return acc.concat(demultiplyPoints(array[index - 1], point))
+      return acc.concat(demultiplyPoint(array[index - 1], point))
     } else {
       return acc.concat([point])
     }
@@ -67,7 +70,7 @@ function polylineToPoints(mapPolyline, demultiply = false) {
 
 module.exports = {
   demultiplyPoints,
-  polylineToPoints,
+  normalizePoints,
   lngToX,
   latToY,
   xToLng,

@@ -15,7 +15,13 @@ const tilesToFeatureCollection = (tiles) => ({
   features: tiles.map((tile) => tileToFeature(tile)),
 })
 
-export const Tiles = ({id, tiles, color}) => (
+export const Tiles = ({
+  id,
+  tiles,
+  color,
+  fillOpacity = 0.1,
+  borderOpacity = 0.1,
+}) => (
   <>
     <Source id={id} type="geojson" data={tilesToFeatureCollection(tiles)} />
     <Layer
@@ -24,7 +30,7 @@ export const Tiles = ({id, tiles, color}) => (
       source={id}
       paint={{
         "fill-color": color,
-        "fill-opacity": 0.1,
+        "fill-opacity": fillOpacity,
       }}
     />
     <Layer
@@ -34,7 +40,7 @@ export const Tiles = ({id, tiles, color}) => (
       paint={{
         "line-color": color,
         "line-width": 2,
-        "line-opacity": 0.1,
+        "line-opacity": borderOpacity,
       }}
     />
   </>

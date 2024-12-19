@@ -1,13 +1,16 @@
-const {pointsToTiles} = require("./tiles")
-const {polylineToPoints} = require("./map")
+const {distinctTiles, pointsToTiles} = require("./tiles")
 
-function getActivityTiles(activity) {
-  const latlngStream = activity.streams && activity.streams.latlng
-  const polyline = activity.map && activity.map.summary_polyline
+function getActivityTiles(activity, allTiles) {
+  const hasPreciseData = activity.streams && activity.streams.latlng
+  const mustDemultiply = !hasPreciseData
+  const tiles = pointsToTiles(activity.coordinates, mustDemultiply)
 
   return {
-    points: latlngStream || polylineToPoints(polyline),
-    tiles: pointsToTiles(latlngStream || polylineToPoints(polyline, true)),
+    all: tiles,
+    parts: {
+      old: [...allTiles],
+      new: tiles.filter(distinctTiles(allTiles)),
+    },
   }
 }
 

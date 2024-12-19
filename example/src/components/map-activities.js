@@ -4,12 +4,8 @@ import React from "react"
 
 const activityToFeature = (activity) => ({
   type: "Feature",
-  properties: {
-    activity,
-    type: activity.type.toLowerCase(),
-  },
   geometry: {
-    coordinates: activity.map.points.map(([lat, lng]) => [lng, lat]),
+    coordinates: activity.coordinates,
     type: "LineString",
   },
 })
@@ -36,8 +32,8 @@ export const Activities = ({id, activities, color}) => (
       }}
       paint={{
         "line-color": color,
-        "line-width": 3,
-        "line-opacity": 1,
+        "line-width": 2,
+        "line-opacity": 0.5,
       }}
     />
   </>

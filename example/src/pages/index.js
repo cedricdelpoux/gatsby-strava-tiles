@@ -10,7 +10,9 @@ import {graphql} from "gatsby"
 const Map = ({
   data: {
     stravaAthlete: {
-      map: {tiles, square},
+      tiles: {
+        parts: {squareBorder, square, cluster, rest},
+      },
     },
     stravaActivities: {nodes: activities},
   },
@@ -33,8 +35,16 @@ const Map = ({
       onViewportChange={setViewState}
     >
       <Tiles id="square" tiles={square} color="#428cf4" />
-      <Tiles id="tiles" tiles={tiles} color="#ff0000" />
-      <Activities id="activites" activities={activities} color="green" />
+      <Tiles id="cluster" tiles={cluster} color="#2ca57e" />
+      <Tiles id="tiles" tiles={rest} color="#ff0000" />
+      <Tiles
+        id="squareBorder"
+        tiles={[squareBorder]}
+        color="#428cf4"
+        fillOpacity={0}
+        borderOpacity={0.5}
+      />
+      <Activities id="activites" activities={activities} color="#ff0000" />
     </MapGL>
   )
 }
@@ -44,25 +54,36 @@ export default Map
 export const pageQuery = graphql`
   query Map {
     stravaAthlete {
-      map {
-        tiles {
-          x
-          y
-          coords
-        }
-        square {
-          x
-          y
-          coords
+      tiles {
+        parts {
+          squareBorder {
+            x
+            y
+            x2
+            y2
+            coords
+          }
+          square {
+            x
+            y
+            coords
+          }
+          cluster {
+            x
+            y
+            coords
+          }
+          rest {
+            x
+            y
+            coords
+          }
         }
       }
     }
-    stravaActivities: allStravaActivity(filter: {map: {points: {ne: null}}}) {
+    stravaActivities: allStravaActivity(filter: {coordinates: {ne: null}}) {
       nodes {
-        type
-        map {
-          points
-        }
+        coordinates
       }
     }
   }

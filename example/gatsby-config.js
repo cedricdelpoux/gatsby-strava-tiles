@@ -13,7 +13,7 @@ module.exports = {
           after:
             new Date(
               new Date().getFullYear(),
-              new Date().getMonth() - 1,
+              new Date().getMonth() - 3,
               new Date().getDate()
             ).getTime() / 1000,
           //
@@ -25,7 +25,7 @@ module.exports = {
       },
     },
     {
-      resolve: require.resolve(`..`), // or `gatsby-strava-tiles`
+      resolve: require.resolve(`..`), // `gatsby-strava-tiles`
     },
   ],
 }
