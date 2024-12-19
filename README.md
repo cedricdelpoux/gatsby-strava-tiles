@@ -49,10 +49,6 @@ module.exports = {
 -   ⇄ Pull/Merge requests and ★ Stars are always welcome.
 -   For bugs and feature requests, please [create an issue][github-issue].
 
-## Changelog
-
-See [CHANGELOG](./CHANGELOG.md)
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENCE](./LICENCE.md) file for details
