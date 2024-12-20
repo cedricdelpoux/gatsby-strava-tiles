@@ -140,7 +140,7 @@ function getMonthly(tilesByMonth) {
           squareBorder: square.border,
           squareSize: square.size,
           square: square.tiles,
-          cluster: allTiles.filter(distinctTiles(square.tiles)),
+          cluster: cluster.filter(distinctTiles(square.tiles)),
           rest: allTiles.filter(distinctTiles([...square.tiles, ...cluster])),
           old: oldTiles.filter(distinctTiles(square.tiles)),
           new: newTiles.filter(distinctTiles(square.tiles)),
