@@ -1,6 +1,14 @@
 const {demultiplyPoints, lngToX, latToY, xToLng, yToLat, Z} = require("./map")
 const {rangeArray} = require("./utils")
 
+function getTile({x, y}) {
+  return {
+    x,
+    y,
+    coords: tileToCoords({x, y}),
+  }
+}
+
 function areTilesSame(tile1, tile2) {
   return tile1.x === tile2.x && tile1.y === tile2.y
 }
@@ -34,11 +42,7 @@ function pointsToTiles(points, demultiply) {
     .map(([lng, lat]) => {
       const x = lngToX(lng)
       const y = latToY(lat)
-      return {
-        x,
-        y,
-        coords: tileToCoords({x, y}),
-      }
+      return getTile({x, y})
     })
     .filter(uniqueTiles)
 }
@@ -48,7 +52,7 @@ function getSquareTiles(square) {
 
   for (let x = square.x; x < square.x + square.size; x++) {
     for (let y = square.y; y < square.y + square.size; y++) {
-      tiles.push({x, y, coords: tileToCoords({x, y})})
+      tiles.push(getTile({x, y}))
     }
   }
 
