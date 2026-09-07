@@ -14,7 +14,9 @@
   ],
   "main": "index.js",
   "files": [
+    "card.js",
     "gatsby-node.js",
+    "index.js",
     "utils",
     "docs"
   ],
@@ -25,14 +27,16 @@
     "lint-staged": "^11.2.6",
     "prettier": "2.4.1",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "sharp": "^0.32.6"
   },
   "peerDependencies": {
     "gatsby": ">=3.0.0",
-    "gatsby-source-strava": "^3.2.1 || ^4.0.0"
+    "gatsby-source-strava": "^3.2.1 || ^4.0.0",
+    "sharp": ">=0.32.0"
   },
   "scripts": {
-    "lint": "eslint *.js gatsby-node.js utils example/src",
+    "lint": "eslint *.js gatsby-node.js utils example/src example/gatsby-node.js",
     "prepublishOnly": "yarn lint"
   },
   "lint-staged": {
@@ -46,6 +50,11 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
+    }
+  },
+  "peerDependenciesMeta": {
+    "sharp": {
+      "optional": true
     }
   }
 }
