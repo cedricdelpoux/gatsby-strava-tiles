@@ -6,16 +6,19 @@
     "clean": "gatsby clean",
     "dev": "gatsby develop",
     "serve": "gatsby serve",
-    "strava-token": "gatsby-source-strava-token"
+    "strava-token": "gatsby-source-strava-token",
+    "fetch-activity": "gatsby-source-strava-activity --streams latlng",
+    "refetch-candidates": "bash refetch-candidates.sh"
   },
   "dependencies": {
     "@urbica/react-map-gl": "^1.16.2",
     "dotenv": "^8.2.0",
     "gatsby": "5.14.0",
-    "gatsby-source-strava": "^2.4.1",
+    "gatsby-source-strava": "^4.0.0",
     "mapbox-gl": "^3.8.0",
     "react": "link:../node_modules/react",
-    "react-dom": "link:../node_modules/react-dom"
+    "react-dom": "link:../node_modules/react-dom",
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
     "eslint-plugin-react": "^7.37.2",

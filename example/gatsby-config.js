@@ -10,13 +10,6 @@ module.exports = {
         stravaToken: process.env.STRAVA_TOKEN,
         debug: true,
         activities: {
-          after:
-            new Date(
-              new Date().getFullYear(),
-              new Date().getMonth() - 3,
-              new Date().getDate()
-            ).getTime() / 1000,
-          //
           // Fetch more precice GPS data for some activities
           // ----
           // streamsTypes: ["latlng"],

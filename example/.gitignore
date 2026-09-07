@@ -1,4 +1,8 @@
 .env
 .cache
+.strava
 node_modules
 public
+refetch-candidates.sh
+.yalc
+yalc.lock
