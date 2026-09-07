@@ -15,12 +15,9 @@
   "main": "index.js",
   "files": [
     "gatsby-node.js",
-    "utils"
+    "utils",
+    "docs"
   ],
-  "dependencies": {
-    "@mapbox/polyline": "^1.2.1",
-    "@turf/midpoint": "^7.1.0"
-  },
   "devDependencies": {
     "eslint": "^8.2.0",
     "eslint-config-prettier": "^8.3.0",
@@ -32,7 +29,7 @@
   },
   "peerDependencies": {
     "gatsby": ">=3.0.0",
-    "gatsby-source-strava": "^2.4.1"
+    "gatsby-source-strava": "^3.2.1 || ^4.0.0"
   },
   "scripts": {
     "lint": "eslint *.js gatsby-node.js utils example/src",

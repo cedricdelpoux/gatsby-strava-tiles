@@ -1,22 +1,28 @@
-const {midpoint} = require("@turf/midpoint")
-const {roundTo5Decimals} = require("./utils")
-
 const Z = 14
+const EARTH_RADIUS_METERS = 6371000
 
-function lngToX(lng) {
-  return Math.floor(((lng + 180) / 360) * Math.pow(2, Z))
+function lngToXf(lng) {
+  return ((lng + 180) / 360) * Math.pow(2, Z)
 }
 
-function latToY(lat) {
-  return Math.floor(
+function latToYf(lat) {
+  return (
     ((1 -
       Math.log(
         Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)
       ) /
         Math.PI) /
       2) *
-      Math.pow(2, Z)
+    Math.pow(2, Z)
   )
+}
+
+function lngToX(lng) {
+  return Math.floor(lngToXf(lng))
+}
+
+function latToY(lat) {
+  return Math.floor(latToYf(lat))
 }
 
 function xToLng(x) {
@@ -28,51 +34,66 @@ function yToLat(y) {
   return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))
 }
 
-function getMidpoint(point1, point2) {
-  return midpoint(point1, point2).geometry.coordinates.map(roundTo5Decimals)
+function distanceInMeters([lng1, lat1], [lng2, lat2]) {
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(a))
 }
 
-function demultiplyPoint(prevPoint, point) {
-  const point4_8 = getMidpoint(prevPoint, point)
-  const point2_8 = getMidpoint(prevPoint, point4_8)
-  const point1_8 = getMidpoint(prevPoint, point2_8)
-  const point3_8 = getMidpoint(point2_8, point4_8)
-  const point6_8 = getMidpoint(point4_8, point)
-  const point5_8 = getMidpoint(point4_8, point6_8)
-  const point7_8 = getMidpoint(point6_8, point)
+// Every grid cell the straight line between two continuous (x, y) tile-space
+// coordinates crosses, found by stepping to whichever axis boundary comes
+// first (Amanatides & Woo voxel traversal). Exact: unlike sampling points
+// along the segment, it cannot miss a tile the line only clips at a corner.
+function cellsAlongLine(x0, y0, x1, y1) {
+  let x = Math.floor(x0)
+  let y = Math.floor(y0)
+  const endX = Math.floor(x1)
+  const endY = Math.floor(y1)
+  const dx = x1 - x0
+  const dy = y1 - y0
+  const stepX = dx > 0 ? 1 : dx < 0 ? -1 : 0
+  const stepY = dy > 0 ? 1 : dy < 0 ? -1 : 0
+  const tDeltaX = dx !== 0 ? Math.abs(1 / dx) : Infinity
+  const tDeltaY = dy !== 0 ? Math.abs(1 / dy) : Infinity
+  let tMaxX =
+    dx !== 0 ? Math.abs((stepX > 0 ? x + 1 - x0 : x0 - x) / dx) : Infinity
+  let tMaxY =
+    dy !== 0 ? Math.abs((stepY > 0 ? y + 1 - y0 : y0 - y) / dy) : Infinity
 
-  return [
-    point1_8,
-    point2_8,
-    point3_8,
-    point4_8,
-    point5_8,
-    point6_8,
-    point7_8,
-    point,
-  ]
-}
+  const cells = [{x, y}]
 
-function normalizePoints(points) {
-  return points.map(([lat, lng]) => [lng, lat])
-}
-
-function demultiplyPoints(points) {
-  return points.reduce((acc, point, index, array) => {
-    if (index > 0) {
-      // Demultiply to create more points on a straight line
-      return acc.concat(demultiplyPoint(array[index - 1], point))
+  while (x !== endX || y !== endY) {
+    if (tMaxX < tMaxY) {
+      x += stepX
+      tMaxX += tDeltaX
+    } else if (tMaxY < tMaxX) {
+      y += stepY
+      tMaxY += tDeltaY
     } else {
-      return acc.concat([point])
+      // Passes exactly through a grid corner: both axes cross at once
+      x += stepX
+      y += stepY
+      tMaxX += tDeltaX
+      tMaxY += tDeltaY
     }
-  }, [])
+    cells.push({x, y})
+  }
+
+  return cells
 }
 
 module.exports = {
-  demultiplyPoints,
-  normalizePoints,
+  cellsAlongLine,
+  distanceInMeters,
   lngToX,
   latToY,
+  lngToXf,
+  latToYf,
   xToLng,
   yToLat,
   Z,
