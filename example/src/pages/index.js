@@ -56,6 +56,10 @@ const Map = ({
     () => (selectedTile ? findActivities(selectedTile) : []),
     [selectedTile, findActivities]
   )
+  const activitiesWithNewTiles = useMemo(
+    () => activities.filter((activity) => activity.tiles.length > 0),
+    [activities]
+  )
   const allTiles = useMemo(
     () => [...parts.square, ...parts.cluster, ...parts.rest],
     [parts]
@@ -163,7 +167,7 @@ const Map = ({
             {settings.activities && (
               <Activities
                 id="activites"
-                activities={activities}
+                activities={activitiesWithNewTiles}
                 color={palette.activity}
               />
             )}
@@ -255,6 +259,10 @@ export const pageQuery = graphql`
         distance
         start_date
         coordinates
+        tiles {
+          x
+          y
+        }
       }
     }
   }

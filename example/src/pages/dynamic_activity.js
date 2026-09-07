@@ -137,7 +137,7 @@ export const pageQuery = graphql`
   query ActivityMap {
     stravaActivities: allStravaActivity(
       sort: {start_date: ASC}
-      filter: {coordinates: {ne: null}}
+      filter: {coordinates: {ne: null}, tiles: {elemMatch: {x: {ne: null}}}}
     ) {
       nodes {
         id
