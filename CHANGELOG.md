@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.1] - 2026-09-18
+
+### Fixed
+
+-   `tiles` could silently disappear from the GraphQL schema when every
+    sourced activity had no coordinates yet. Its shape is now declared
+    explicitly, so it always resolves, empty or not.
+-   Building the schema logged two harmless but noisy warnings. Fixed.
+
 ## [0.3.0] - 2026-09-07
 
 ### Added
