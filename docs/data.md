@@ -5,9 +5,10 @@ nodes created by [gatsby-source-strava][gatsby-source-strava]. All `x`/`y`
 pairs are [slippy map](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames)
 tile coordinates at zoom level 14.
 
-> The field is inferred from the data, not declared upfront by the plugin, so
-> it only appears in the GraphQL schema once at least one activity with
-> coordinates has been fetched.
+> The field's shape is declared upfront by the plugin, so it is always
+> present in the GraphQL schema, even before any activity with coordinates
+> has been fetched -- it just resolves as empty (`[]`, or zeroed counts under
+> `StravaAthlete.tiles`) until then.
 
 ## `StravaActivity.tiles`
 
