@@ -5578,10 +5578,10 @@ gatsby-sharp@^1.14.0:
   dependencies:
     sharp "^0.32.6"
 
-gatsby-source-strava@4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/gatsby-source-strava/-/gatsby-source-strava-4.0.0.tgz#b163cc6464b1d72cf61642183edc47a041abf015"
-  integrity sha512-nqF2+KgEv5a3uqAJSR3Nn11DUB6wkKWGTMVHYJ/irex/ygJWVi9Knxv0013eLm0zEyQr1s8ZDO6I0Y4BAHRORw==
+gatsby-source-strava@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/gatsby-source-strava/-/gatsby-source-strava-4.2.0.tgz#02d327d8f61a735e85146d9b2017eed792783080"
+  integrity sha512-j3C3jnE1KVTNXaxKQw+HkMuvrgJQa3iAGEQvuDtjAd6Js2CrmxaE2jduqOO4wJEBtPpH2SjClEjEDTZeyo+0Kg==
   dependencies:
     "@mapbox/polyline" "^1.2.1"
     chokidar "^3.5.3"

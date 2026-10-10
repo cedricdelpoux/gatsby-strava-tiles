@@ -3,6 +3,6 @@
 .strava
 node_modules
 public
-refetch-candidates.sh
+precise-activities.json
 .yalc
 yalc.lock
