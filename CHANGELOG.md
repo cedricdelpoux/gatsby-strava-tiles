@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.4.0] - 2026-10-11
+
+### Added
+
+-   `StravaRoute.tiles`, with `all` the tiles a route crosses and `new` the
+    ones no activity has covered yet, the tiles the route would earn. They are
+    computed at build time like the activities' tiles, and the field exists
+    even when the site has no route. See the [data](./docs/data.md)
+    documentation.
+-   `declutter` option, to draw each road only once. It picks the activities
+    to draw, in chronological order or by tile coverage, cuts the parts of a
+    track that follow a road already drawn, and exposes the result as
+    `StravaActivity.declutter`. It is disabled by default. See the
+    [declutter](./docs/declutter.md) documentation.
+-   `getTileActivities` and `simplify` are exported, so that a site can write
+    its own track files.
+
+### Changed
+
+-   `gatsby-source-strava` 4.3.0 or later is required, since it creates the
+    `StravaRoute` nodes.
+
+### Fixed
+
+-   Since 0.3.2, a site reading `tiles` in its own `createPages` got empty
+    lists after a `gatsby clean`, because the tiles were computed after it.
+    They are now computed before.
+
 ## [0.3.2] - 2026-10-11
 
 ### Fixed
