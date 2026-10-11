@@ -45,10 +45,8 @@ function distanceInMeters([lng1, lat1], [lng2, lat2]) {
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(a))
 }
 
-// Every grid cell the straight line between two continuous (x, y) tile-space
-// coordinates crosses, found by stepping to whichever axis boundary comes
-// first (Amanatides & Woo voxel traversal). Exact: unlike sampling points
-// along the segment, it cannot miss a tile the line only clips at a corner.
+// Every grid cell crossed by the segment between two tile-space points
+// (Amanatides & Woo voxel traversal), corners included
 function cellsAlongLine(x0, y0, x1, y1) {
   let x = Math.floor(x0)
   let y = Math.floor(y0)

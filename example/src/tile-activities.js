@@ -2,16 +2,9 @@ import {latToY, lngToX} from "../../utils/map"
 
 import {pointsToTiles} from "../../utils/tiles"
 
-// `StravaActivity.tiles` holds only the tiles an activity covered *first*, so
-// it cannot answer "which rides went through here": a ride over ground already
-// covered has an empty `tiles`. The tiles a track runs through are recomputed
-// from its coordinates instead -- the same coordinates the map has already
-// loaded to draw the tracks.
-//
-// Lazily though. A whole history is a few million points, and walking all of
-// them on load would cost seconds for a popup that may never be opened. A
-// bounding box in tile space rules out almost every activity for a given tile,
-// and only the survivors are ever walked -- once, then cached.
+// `tiles` only holds the tiles an activity covered first, so the tiles a
+// track crosses are recomputed from its coordinates, lazily: a bounding box
+// rules out most activities, and the rest are walked once, then cached.
 const getBoundingBox = (coordinates) =>
   coordinates.reduce(
     (box, [lng, lat]) => {
@@ -56,8 +49,7 @@ export const createTileIndex = (activities) => {
     return tiles
   }
 
-  // A tile is only ever crossed between two recorded points, so an activity
-  // whose box misses the tile cannot have gone through it
+  // An activity whose box misses the tile can't cross it
   return ({x, y}) =>
     getBoundingBoxes()
       .filter(

@@ -27,35 +27,28 @@ const STYLE = {
   badgeText: "#ffffff",
 }
 
-// One shape per tile, or one shape per connected area -- same choice `Tiles`
-// offers on the map, just as valid here since nothing a card draws goes
-// through a URL to have a size limit in the first place
+// One shape per tile, or one per connected area
 function toShapes(tiles, outlined) {
   return outlined
     ? tilesToOutline(tiles)
     : tiles.map((tile) => [tileToCoords(tile)])
 }
 
-// `coordinates` is one track (`[[lng, lat], ...]`) for a single activity, or
-// several (`[[[lng, lat], ...], ...]`) for a card merging more than one --
-// the same LineString/MultiLineString nesting GeoJSON itself uses to tell the
-// two apart, so a single number at the second level means "not nested yet"
+// One track (`[[lng, lat], ...]`), or several for a merged card, nested
+// like a GeoJSON LineString/MultiLineString
 function asTracks(coordinates) {
   return typeof coordinates[0][0] === "number" ? [coordinates] : coordinates
 }
 
 const SIZE = {width: 600, height: 300}
 
-// A map background is photographic enough that PNG is the wrong container:
-// the same card is about seven times smaller as WebP
+// About seven times smaller than PNG with a map background
 const FORMAT = {type: "webp", options: {quality: 85}}
 
-// One activity card as an image buffer: the ground already covered around the
-// ride(s), what it added, which tiles it closed in, and the track, drawn on a
-// background. Nothing goes through a URL, so shape count and size are free.
+// One activity card as an image buffer: covered ground, added and closed
+// in tiles, and the track(s), on a background
 async function renderActivityCard({
-  // One activity's track, or several for a card merging more than one -- see
-  // `asTracks` below
+  // One track, or several for a merged card (see `asTracks`)
   coordinates,
   added = [],
   clustered = [],
@@ -77,9 +70,7 @@ async function renderActivityCard({
   const tracks = asTracks(coordinates)
 
   const frame = getCardFrame({
-    // Per track, not on the flattened list: `pointsToTiles` fills in the
-    // ground between consecutive points, and the last point of one day and
-    // the first of the next are not ground anyone rode between
+    // Per track, so no tiles are filled in between two days
     activityTiles:
       activityTiles || tracks.flatMap((track) => pointsToTiles(track)),
     padding,
@@ -96,8 +87,7 @@ async function renderActivityCard({
     color: style.background,
   })
 
-  // The three sets overlap, and a tile painted twice reads as a fourth colour,
-  // so each layer is cut where the one above it already covers
+  // Each layer is cut where the one above covers it, to paint tiles once
   const addedInFrame = clipToFrame(background.frame, added)
   const clusteredInFrame = clipToFrame(background.frame, clustered).filter(
     distinctTiles(addedInFrame)
@@ -123,8 +113,7 @@ async function renderActivityCard({
     trackWidth: style.trackWidth,
     badge: style.badge,
     badgeText: style.badgeText,
-    // Each badge counts what its own colour paints, so a tile both new and
-    // newly closed in counts as new only -- the swatch has to match the area
+    // A tile both new and closed in counts as new only, like its colour
     counts: [
       {count: addedInFrame.length, color: style.added},
       {count: clusteredInFrame.length, color: style.clustered},

@@ -1,7 +1,6 @@
 const {lngToXf, latToYf, Z} = require("../map")
 
-// The ground a card shows: the activity's extent plus a margin, grown to the
-// card's shape. Everything drawn is clipped to it, tiles the ride missed too.
+// The activity's extent plus a margin, grown to the card's shape
 function getCardFrame({activityTiles, padding = 2, minSize = 8, aspect = 2}) {
   const xs = activityTiles.map(({x}) => x)
   const ys = activityTiles.map(({y}) => y)
@@ -12,8 +11,7 @@ function getCardFrame({activityTiles, padding = 2, minSize = 8, aspect = 2}) {
   let y0 = Math.min(...ys) - padding
   let y1 = Math.max(...ys) + 1 + padding
 
-  // A short activity on ground already covered would otherwise fill its frame
-  // with one flat colour, with no uncovered ground to read against
+  // Keeps some uncovered ground in view around a short activity
   const short = minSize - (x1 - x0)
   if (short > 0) {
     x0 -= short / 2
@@ -46,8 +44,7 @@ function project(frame, size) {
   ]
 }
 
-// The overlay is drawn from geometry, so the background is fetched at whatever
-// zoom matches the card's resolution, not at the zoom tiles are counted at
+// The background zoom matches the card's resolution, not the tile zoom
 function getBackgroundZoom(frame, size) {
   const scale = size.width / (frame.x1 - frame.x0)
 

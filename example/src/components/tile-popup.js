@@ -1,8 +1,7 @@
 import {Popup} from "@urbica/react-map-gl"
 import React from "react"
 
-// A tile is 2.4 km wide, so a popular one can hold hundreds of rides -- the
-// list is cut and counted rather than scrolled forever
+// A popular tile can hold hundreds of rides, so the list is cut
 const MAX_LISTED = 12
 
 const formatDate = (startDate) => startDate.substring(0, 10)

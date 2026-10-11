@@ -23,8 +23,7 @@ function getAthleteTiles(tiles, tilesByMonth) {
       squareBorder: square.border,
       squareSize: square.size,
       square: square.tiles,
-      // The row and the column cross the three parts below rather than being
-      // one of them: they are drawn over the split, not instead of it
+      // Drawn over the three parts below, not one of them
       rowBorder: row.border,
       rowSize: row.size,
       row: row.tiles,

@@ -21,8 +21,7 @@ async function fetchTile({url, cacheDir}) {
   return buffer
 }
 
-// A card with no map under it. Without a background there is nothing to align
-// to, so the frame is used exactly as asked for, and no tile is ever fetched.
+// No map under the card: the frame is used as is, nothing is fetched
 async function getFlatBackground({frame, size, color}) {
   const sharp = getSharp()
 
@@ -42,8 +41,7 @@ async function getFlatBackground({frame, size, color}) {
   }
 }
 
-// Stitch the tiles covering the frame, then cut the frame out. Compositing at
-// their own resolution first is what keeps seams out of the joins.
+// Stitch the tiles at their own resolution, then crop, to avoid seams
 async function getBackground({frame, size, zoom, tileUrl, cacheDir, color}) {
   if (!tileUrl) return getFlatBackground({frame, size, color})
 
@@ -81,8 +79,7 @@ async function getBackground({frame, size, zoom, tileUrl, cacheDir, color}) {
     },
   }).composite(buffers)
 
-  // Crop on whole pixels and report the frame actually cut, so the overlay is
-  // projected onto the ground the background really shows
+  // Crop on whole pixels and return that frame, so the overlay lines up
   const perTile = TILE_PIXELS / span
   const left = Math.round((frame.x0 - minX * span) * perTile)
   const top = Math.round((frame.y0 - minY * span) * perTile)

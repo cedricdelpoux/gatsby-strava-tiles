@@ -17,9 +17,7 @@ const tilesToFeatureCollection = (tiles) => ({
   features: tiles.map((tile) => tileToFeature(tile)),
 })
 
-// The plugin gives the same area both ways, so drawing one or the other is a
-// prop rather than another component: one square per tile with its own four
-// borders, or the border of the whole area as a single shape
+// One square per tile, or the outline of the whole area
 const outlineToFeature = (outline) => ({
   type: "Feature",
   geometry: {
@@ -37,10 +35,7 @@ export const Tiles = ({
   borderWidth = 2,
   fillOpacity = 0.1,
   borderOpacity = 0.1,
-  // The style's own layer that sits under the city labels: everything drawn
-  // before it stays under the place names, and each layer inserted there ends
-  // up over the one inserted before it -- which is what orders the coverage,
-  // then the tracks, under the labels
+  // Inserted under the city labels, each layer above the previous one
   before = "departments-border",
   onTileClick,
 }) => {

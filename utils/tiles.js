@@ -11,9 +11,8 @@ const {
 } = require("./map")
 const {roundTo5Decimals} = require("./utils")
 
-// Beyond this, two consecutive points are treated as a GPS pause (train,
-// ferry, tunnel...) rather than as ground actually covered, so the tiles
-// between them are not counted
+// Beyond this, two consecutive points are a GPS pause (train, ferry...)
+// and the tiles between them don't count
 const MAX_GAP_METERS = 10000
 
 function getTile({x, y}) {
@@ -39,8 +38,7 @@ function distinctTiles(tiles) {
   return (tile) => !excluded.has(tileKey(tile))
 }
 
-// `size` covers the square case; `width` and `height` the rectangles the max
-// row and the max column need, both one tile thick
+// `size` for the square, `width`/`height` for the max row and column
 function tileToCoords({x, y, size = 1, width = size, height = size}) {
   const topLng = xToLng(x, Z)
   const topLat = yToLat(y, Z)
@@ -86,8 +84,7 @@ function pointsToTiles(points, {detectGaps = false} = {}) {
   return uniqueTiles(tiles)
 }
 
-// Steps in tile space (x grows east, y grows south), in clockwise order, so
-// `(dir + 1) % 4` is a right turn and `(dir + 3) % 4` a left one
+// Clockwise, so `(dir + 1) % 4` turns right and `(dir + 3) % 4` left
 const DIRECTIONS = [
   {dx: 1, dy: 0}, // 0 east
   {dx: 0, dy: 1}, // 1 south
@@ -95,10 +92,8 @@ const DIRECTIONS = [
   {dx: 0, dy: -1}, // 3 north
 ]
 
-// Each side of a tile as the neighbour that must be missing for it to be on
-// the boundary, the corner it starts from, and the direction it runs in.
-// Oriented so the covered tile is always on the right, which is what makes a
-// ring's winding tell an outer boundary from a hole.
+// Each tile side: the neighbour whose absence puts it on the boundary, its
+// start corner and direction, with the covered tile on the right
 const SIDES = [
   {nx: 0, ny: -1, vx: 0, vy: 0, dir: 0}, // north side, runs east
   {nx: 1, ny: 0, vx: 1, vy: 0, dir: 1}, // east side, runs south
@@ -110,9 +105,7 @@ function edgeKey({x, y, dir}) {
   return `${x}-${y}-${dir}`
 }
 
-// The 4-connected groups of tiles. Splitting first means a group's boundary is
-// its own outer ring plus its own holes, so `getRings` never has to work out
-// which outer ring a hole belongs to.
+// The 4-connected groups of tiles, so each group's holes are its own
 function getComponents(tiles) {
   const tilesSet = new Set(tiles.map(tileKey))
   const visited = new Set()
@@ -144,9 +137,8 @@ function getComponents(tiles) {
   return components
 }
 
-// Every boundary ring of one 4-connected group, as its corners in tile space.
-// Rings running clockwise (positive `ringArea`) are outer boundaries, the ones
-// running counter-clockwise are holes.
+// Every boundary ring of one group: clockwise rings are outer boundaries,
+// counter-clockwise ones are holes
 function getRings(component) {
   const tilesSet = new Set(component.map(tileKey))
   const edges = new Map()
@@ -168,9 +160,7 @@ function getRings(component) {
     const ringEdges = []
     let key = startKey
 
-    // Follow the boundary keeping covered tiles on the right. Every step
-    // consumes one edge, so this ends after `edges.size` steps at the very
-    // worst -- no iteration guard needed.
+    // Covered tiles on the right. Each step consumes an edge, so this ends
     while (edges.has(key) && !used.has(key)) {
       used.add(key)
 
@@ -180,16 +170,13 @@ function getRings(component) {
       const {dx, dy} = DIRECTIONS[edge.dir]
       const corner = {x: edge.x + dx, y: edge.y + dy}
 
-      // Right turn first, then straight, then left -- never back. Only
-      // decides anything where two parts of a group touch diagonally: turning
-      // right traces the pinch instead of cutting across it.
+      // Right, straight, then left: traces diagonal pinches, not across them
       key = [(edge.dir + 1) % 4, edge.dir, (edge.dir + 3) % 4]
         .map((dir) => edgeKey({...corner, dir}))
         .find((candidate) => edges.has(candidate) && !used.has(candidate))
     }
 
-    // Only the corners: a straight run along the grid produces one edge per
-    // tile, and keeping all of them would defeat the point of outlining
+    // Only the corners, not one point per tile edge
     const ring = ringEdges
       .filter((edge, index) => {
         const previous = ringEdges[(index || ringEdges.length) - 1]
@@ -203,8 +190,7 @@ function getRings(component) {
   return rings
 }
 
-// Shoelace formula, exact here: tile corners are integers, so the sign needs
-// none of the tolerance it would on projected coordinates.
+// Shoelace formula, exact on integer tile corners
 function ringArea(ring) {
   return ring.reduce((area, {x, y}, index) => {
     const next = ring[(index + 1) % ring.length]
@@ -213,15 +199,13 @@ function ringArea(ring) {
 }
 
 function ringToCoords(ring) {
-  // Tile corners sit 2.4 km apart at zoom 14, so a metre of precision is
-  // already more than the grid carries, at half the bytes of the full float
+  // A metre of precision is plenty for 2.4 km tiles
   const coords = ring.map(({x, y}) => [
     roundTo5Decimals(xToLng(x)),
     roundTo5Decimals(yToLat(y)),
   ])
 
-  // Latitude runs the opposite way to y, so projecting flips every winding;
-  // reversing restores what GeoJSON expects -- outer rings counter-clockwise
+  // Latitude runs opposite to y, so reverse to keep GeoJSON's winding
   coords.reverse()
 
   return [...coords, coords[0]]
@@ -251,10 +235,8 @@ function runToTiles({from, to}) {
   return tiles
 }
 
-// Largest fully covered square, by the "maximal square in a binary grid"
-// dynamic program: dp(x, y) is the side of the largest square starting at
-// (x, y), built from the three one step down and right -- already known, since
-// tiles are walked in decreasing x, then decreasing y.
+// Largest fully covered square, by the classic dynamic program, walking
+// the tiles in decreasing x, then decreasing y
 function getSquare(tiles) {
   const dp = new Map()
   let maxSquare = {size: 0}
@@ -285,15 +267,13 @@ function getSquare(tiles) {
         y: maxSquare.y + maxSquare.size - 1,
       },
     }),
-    // The square as one `size`-wide tile, in the same grid coordinates as
-    // every other tile the plugin exposes
+    // As one `size`-wide tile, in the usual grid coordinates
     border: maxSquare,
   }
 }
 
-// The longest unbroken run of covered tiles along one axis: `fixed` is the
-// coordinate that stays the same along the run, `varying` the one that steps
-// by one. Returns where the run starts and how long it is.
+// Longest unbroken run along one axis: `fixed` stays constant, `varying`
+// steps by one
 function getMaxRun(tiles, {fixed, varying}) {
   const lines = new Map()
 
@@ -335,8 +315,7 @@ function getMaxRow(tiles) {
   return {
     size,
     tiles: runToTiles({from: {x, y}, to: {x: x + size - 1, y}}),
-    // The run as a single tile `size` long and one tile thick, in the same
-    // grid coordinates as every other tile the plugin exposes
+    // As one tile `size` long and one tile thick
     border: {x, y, width: size, height: 1},
   }
 }

@@ -1,6 +1,4 @@
-// Loaded on demand, never at import time, so that a site using nothing but the
-// tile data does not have to install an image library it will never call.
-// `sharp` is declared as an optional peer dependency for the same reason.
+// Loaded on demand: `sharp` is an optional peer dependency
 function getSharp() {
   try {
     return require("sharp")

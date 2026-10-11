@@ -1,28 +1,18 @@
 const fs = require("fs")
 const path = require("path")
 
-// `require("gatsby-strava-tiles/card")` in a real site -- this example resolves
-// the plugin from the repository next to it
+// `require("gatsby-strava-tiles/card")` in a real site
 const {getActivityCards, renderActivityCard} = require("../card")
 
-// How many of the most recent activities get a card. Drawing the whole history
-// would mean thousands of images built and deployed for the handful a page ever
-// shows, so this list is what drives the work: an activity outside it is never
-// rendered and its background tiles are never fetched.
+// Only the most recent activities get a card
 const CARDS = 20
 
 const SIZE = {width: 600, height: 300}
 
-// A neutral background on purpose. The site's own style is heavily green, which
-// is the same hue as the covered tiles drawn over it -- readable as an
-// interactive map you can zoom, unreadable as a 600px card. Passing no
-// `tileUrl` at all drops the background entirely, which is lighter still but
-// takes every place name with it.
+// Neutral, so the green tiles drawn over it stay readable
 const STYLE = "mapbox/light-v11"
 
-// Deliberately not "cards": that is where the /cards page writes its own HTML,
-// and page output and assets sharing a directory is a collision waiting for
-// whoever adds a /cards/<something> page next
+// Not `public/cards`, where the /cards page is written
 const IMAGES_DIR = path.join(__dirname, "public", "activity-cards")
 const TILE_CACHE_DIR = path.join(__dirname, ".cache", "card-background-tiles")
 
@@ -36,10 +26,7 @@ exports.createPages = async ({graphql, actions: {createPage}, reporter}) => {
     return
   }
 
-  // Every activity, but only its tiles. Walking the whole history is what lets
-  // a card show the ground that was already covered *on the day of the ride*
-  // rather than today's coverage -- which is the only thing that makes "new"
-  // mean anything. It costs nothing: no coordinates are read here.
+  // Every activity's tiles, so a card shows the coverage on the day
   const history = await graphql(`
     {
       allStravaActivity(filter: {coordinates: {ne: null}}) {
@@ -91,9 +78,7 @@ exports.createPages = async ({graphql, actions: {createPage}, reporter}) => {
     return
   }
 
-  // One group per activity -- each card here shows a single ride. A trip
-  // spanning several days would instead group their ids together, e.g.
-  // `[[day1, day2, day3], ...]`, to draw them as one merged card.
+  // One card per activity. Group several ids to merge a multi-day trip.
   const activities = recent.data.allStravaActivity.nodes
   const drawable = getActivityCards({
     activities: history.data.allStravaActivity.nodes,
@@ -118,9 +103,7 @@ exports.createPages = async ({graphql, actions: {createPage}, reporter}) => {
       image: `/activity-cards/${name}`,
     })
 
-    // An activity's card never changes once drawn: what it shows is its own
-    // track and the coverage that existed before it, and no later ride can
-    // alter either
+    // A drawn card never changes
     if (fs.existsSync(file)) continue
 
     const {image} = await renderActivityCard({

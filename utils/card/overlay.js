@@ -2,8 +2,7 @@ const {project} = require("./frame")
 
 const round = (n) => Math.round(n * 10) / 10
 
-// One MultiPolygon as a single SVG path. `evenodd` is what makes the holes in
-// the outline actual holes rather than shapes drawn on top.
+// One MultiPolygon as one SVG path, `evenodd` keeping its holes
 function multiPolygonToPath(multiPolygon, to) {
   return multiPolygon
     .flat()
@@ -29,14 +28,12 @@ function lineToPath(coordinates, to) {
   )
 }
 
-// Each track its own subpath -- a multi-day card must not draw a straight
-// line from where one day's track ends to where the next one starts
+// One subpath per track, so the days of a merged card aren't joined
 function tracksToPath(tracks, to) {
   return tracks.map((track) => lineToPath(track, to)).join(" ")
 }
 
-// Laid out from the right so the leftmost badge is the last one given, which
-// keeps the counts in the same order as the layers they describe
+// Laid out from the right, keeping the badges in layer order
 function badges(counts, size, badge, badgeText) {
   const height = 26
   const gap = 6

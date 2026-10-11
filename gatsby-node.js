@@ -1,11 +1,8 @@
 const {getActivityTiles} = require("./utils/activity.js")
 const {getAthleteTiles} = require("./utils/athlete.js")
 
-// `createNodeField` alone lets Gatsby infer the type, which only works once
-// it has seen a non-empty example -- a sparse fetch (a narrow date range, or
-// no activities with coordinates yet) leaves `tiles` empty on every node and
-// the field silently drops from the schema. Declaring it here keeps it typed
-// regardless of how much data was actually sourced.
+// Declared explicitly: an inferred type drops from the schema when every
+// sourced `tiles` is empty
 exports.createSchemaCustomization = ({actions: {createTypes}}) => {
   createTypes(`
     type Tile {
@@ -13,8 +10,7 @@ exports.createSchemaCustomization = ({actions: {createTypes}}) => {
       y: Int
     }
 
-    # squareBorder only sets \`size\`; rowBorder/columnBorder only set
-    # \`width\`/\`height\` -- one shared shape, unused fields come back null
+    # squareBorder sets \`size\`, rowBorder/columnBorder set \`width\`/\`height\`
     type TileBorder {
       x: Int
       y: Int
@@ -81,19 +77,9 @@ exports.createSchemaCustomization = ({actions: {createTypes}}) => {
   `)
 }
 
-// StravaActivity/StravaAthlete already exist -- created, and owned, by
-// gatsby-source-strava. Adding `tiles` to them through `createTypes` above
-// would make Gatsby treat this plugin as redefining a type it doesn't own,
-// which logs a "could potentially cause conflicts" warning even though nothing
-// actually conflicts. `createResolvers` adds a field to an existing type
-// without that ownership check, so it doesn't warn.
-//
-// The resolver reads `source.fields.tiles`, not `source.tiles`: that's what
-// `createNodeField` actually persists. Reading `source.tiles` directly only
-// happens to work for StravaActivity because `recomputeTiles` mutates the
-// still-live node reference before persisting; for StravaAthlete that
-// mutation lands too late and it would resolve to `null`, crashing any query
-// that destructures into it.
+// Not `createTypes`: these types belong to gatsby-source-strava, and
+// redefining them logs a conflict warning. `fields.tiles` is what
+// `createNodeField` persists, `source.tiles` can be `null`.
 exports.createResolvers = ({createResolvers}) => {
   createResolvers({
     StravaActivity: {
@@ -111,15 +97,12 @@ exports.createResolvers = ({createResolvers}) => {
   })
 }
 
-// Raw node references, so `recomputeTiles` can read their
-// `coordinates`/`streams`/`start_date` directly later
 const activityNodesById = new Map()
 let athleteNode = null
 let hasSourced = false
 
-// Which tiles an activity was the first to cover only means anything walked in
-// chronological order, and `gatsby-source-strava` creates nodes in whatever
-// order Strava returned them -- hence the sort, on every recompute.
+// New tiles only make sense in chronological order, which Strava doesn't
+// guarantee
 function recomputeTiles({createNodeField}) {
   const sortedActivityNodes = [...activityNodesById.values()].sort((a, b) =>
     a.start_date < b.start_date ? -1 : a.start_date > b.start_date ? 1 : 0
@@ -152,16 +135,12 @@ function recomputeTiles({createNodeField}) {
 
 exports.onCreateNode = ({node, actions: {createNodeField}}) => {
   if (node.internal.type === "StravaActivity") {
-    // The schema resolves `tiles` from this field (see `createResolvers`
-    // above), so this is what the query actually reads
     createNodeField({node, name: "tiles", value: []})
 
     if (node.coordinates && node.coordinates.length > 0) {
       activityNodesById.set(node.id, node)
 
-      // Before that, `onPostBootstrap` folds the whole import in one go;
-      // after, this is a dev-mode refetch of one activity, recomputed on its
-      // own
+      // A dev-mode refetch, after `onPostBootstrap`
       if (hasSourced) {
         recomputeTiles({createNodeField})
       }
@@ -173,15 +152,9 @@ exports.onCreateNode = ({node, actions: {createNodeField}}) => {
   }
 }
 
-// `sourceNodes` would also work -- Gatsby finishes one plugin's `sourceNodes`
-// before starting the next, so every node gatsby-source-strava creates would
-// already exist there too -- but exporting it marks this plugin as a
-// "can generate nodes" one, and it never calls `createNode`, only
-// `createNodeField` on nodes another plugin owns. That mismatch is exactly
-// what triggers Gatsby's "has generated no Gatsby nodes" warning.
-// `onPostBootstrap` runs once, after every plugin's `sourceNodes` has
-// finished (regardless of plugin order in `gatsby-config.js`) and before
-// queries are run, so it does the same job without tripping that check.
+// Runs once every plugin has sourced its nodes, before queries. Not
+// `sourceNodes`: exporting it without calling `createNode` triggers Gatsby's
+// "has generated no Gatsby nodes" warning.
 exports.onPostBootstrap = ({
   actions: {createNodeField},
   getNodesByType,
@@ -203,9 +176,7 @@ exports.onPostBootstrap = ({
 
     reporter.success("strava-tiles: tiles computed")
   } catch (e) {
-    // `panicOnBuild`, not `panic`: it only kills the process for `gatsby
-    // build`, so a bad activity doesn't take down `gatsby develop` on every
-    // reload
+    // Only fatal for `gatsby build`, not `gatsby develop`
     reporter.panicOnBuild(`strava-tiles: ${e.message}`, e)
   }
 }

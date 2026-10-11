@@ -83,8 +83,7 @@ const Settings = ({settings, onChange}) => (
   </div>
 )
 
-// A white bar over the map: the numbers on the left, the settings panel behind
-// the button on the right
+// The numbers on the left, the settings button on the right
 export const TopBar = ({settings, onSettingsChange, children}) => {
   const [isOpen, setIsOpen] = useState(false)
 
