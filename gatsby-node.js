@@ -111,8 +111,8 @@ exports.createResolvers = ({createResolvers}) => {
   })
 }
 
-// Raw node references, captured in `onCreateNode`, so `recomputeTiles` can
-// read their `coordinates`/`streams`/`start_date` directly later
+// Raw node references, so `recomputeTiles` can read their
+// `coordinates`/`streams`/`start_date` directly later
 const activityNodesById = new Map()
 let athleteNode = null
 let hasSourced = false
@@ -182,8 +182,22 @@ exports.onCreateNode = ({node, actions: {createNodeField}}) => {
 // `onPostBootstrap` runs once, after every plugin's `sourceNodes` has
 // finished (regardless of plugin order in `gatsby-config.js`) and before
 // queries are run, so it does the same job without tripping that check.
-exports.onPostBootstrap = ({actions: {createNodeField}, reporter}) => {
+exports.onPostBootstrap = ({
+  actions: {createNodeField},
+  getNodesByType,
+  reporter,
+}) => {
   try {
+    // With Gatsby's cache kept, `onCreateNode` only sees new or changed nodes
+    getNodesByType("StravaActivity").forEach((node) => {
+      if (node.coordinates && node.coordinates.length > 0) {
+        activityNodesById.set(node.id, node)
+      }
+    })
+
+    const [athlete] = getNodesByType("StravaAthlete")
+    if (athlete) athleteNode = athlete
+
     recomputeTiles({createNodeField})
     hasSourced = true
 

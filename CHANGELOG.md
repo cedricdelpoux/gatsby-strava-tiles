@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+-   Restarting `gatsby develop` or `gatsby build` with Gatsby's cache kept
+    computed the tiles from the activities fetched since the previous run
+    only, instead of the whole history, so `StravaAthlete.tiles` came out
+    nearly empty. The tiles are now always computed from every activity.
+
 ## [0.3.1] - 2026-09-18
 
 ### Fixed
