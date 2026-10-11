@@ -19,7 +19,6 @@ import {graphql} from "gatsby"
 const Map = ({
   data: {
     stravaAthlete: {tiles},
-    yearMonths,
     stravaActivities: {nodes: activities},
   },
 }) => {
@@ -29,13 +28,14 @@ const Map = ({
     latitude: 43.708,
   })
 
+  const yearMonths = useMemo(
+    () => tiles.monthly.map(({yearMonth}) => yearMonth),
+    [tiles]
+  )
   const [yearMonthIndex, setYearMonthIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
   const [selectedActivity, setSelectedActivity] = useState(null)
-  const yearMonth = useMemo(
-    () => yearMonths.distinct[yearMonthIndex],
-    [yearMonthIndex]
-  )
+  const yearMonth = useMemo(() => yearMonths[yearMonthIndex], [yearMonthIndex])
   const monthActivities = useMemo(
     () => activities.filter(({start_date}) => start_date.startsWith(yearMonth)),
     [yearMonth]
@@ -62,7 +62,7 @@ const Map = ({
 
     const interval = setInterval(() => {
       setYearMonthIndex((index) =>
-        index < yearMonths.distinct.length - 1 ? index + 1 : 0
+        index < yearMonths.length - 1 ? index + 1 : 0
       )
     }, 1000)
     return () => clearInterval(interval)
@@ -77,7 +77,7 @@ const Map = ({
     <>
       <PlaybackBar
         index={yearMonthIndex}
-        max={yearMonths.distinct.length - 1}
+        max={yearMonths.length - 1}
         isPlaying={isPlaying}
         onTogglePlay={() => setIsPlaying((playing) => !playing)}
         onIndexChange={handleIndexChange}
@@ -125,7 +125,7 @@ const Map = ({
 export default Map
 
 export const pageQuery = graphql`
-  query MonthMap {
+  query MonthMap($activityIdsWithNewTiles: [String]) {
     stravaAthlete {
       tiles {
         monthly {
@@ -152,12 +152,9 @@ export const pageQuery = graphql`
         }
       }
     }
-    yearMonths: allStravaAthlete {
-      distinct(field: {tiles: {monthly: {yearMonth: SELECT}}})
-    }
     stravaActivities: allStravaActivity(
       sort: {start_date: ASC}
-      filter: {coordinates: {ne: null}, tiles: {elemMatch: {x: {ne: null}}}}
+      filter: {id: {in: $activityIdsWithNewTiles}}
     ) {
       nodes {
         id

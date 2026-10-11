@@ -20,7 +20,49 @@ const tileUrl = ({z, x, y}) =>
   `https://api.mapbox.com/styles/v1/${STYLE}/tiles/256/${z}/${x}/${y}@2x` +
   `?access_token=${process.env.GATSBY_MAPBOX_TOKEN}`
 
-exports.createPages = async ({graphql, actions: {createPage}, reporter}) => {
+// The animated pages only draw these. `tiles` comes from a resolver, which a
+// page query filter can't read.
+const PAGES_WITH_NEW_TILE_ACTIVITIES = ["/dynamic_activity/", "/dynamic_month/"]
+let activityIdsWithNewTiles = []
+
+exports.createPages = async (args) => {
+  await collectActivityIdsWithNewTiles(args)
+  await createCardsPage(args)
+}
+
+// `createPages` runs before the pages of src/pages are created
+exports.onCreatePage = ({page, actions: {createPage, deletePage}}) => {
+  if (!PAGES_WITH_NEW_TILE_ACTIVITIES.includes(page.path)) return
+
+  deletePage(page)
+  createPage({...page, context: {...page.context, activityIdsWithNewTiles}})
+}
+
+async function collectActivityIdsWithNewTiles({graphql, reporter}) {
+  const result = await graphql(`
+    {
+      allStravaActivity(filter: {coordinates: {ne: null}}) {
+        nodes {
+          id
+          tiles {
+            x
+          }
+        }
+      }
+    }
+  `)
+
+  if (result.errors) {
+    reporter.panicOnBuild("Error querying the new tiles", result.errors)
+    return
+  }
+
+  activityIdsWithNewTiles = result.data.allStravaActivity.nodes
+    .filter(({tiles}) => tiles.length > 0)
+    .map(({id}) => id)
+}
+
+async function createCardsPage({graphql, actions: {createPage}, reporter}) {
   if (!process.env.GATSBY_MAPBOX_TOKEN) {
     reporter.warn("GATSBY_MAPBOX_TOKEN is missing, skipping the activity cards")
     return

@@ -134,10 +134,10 @@ const Map = ({
 export default Map
 
 export const pageQuery = graphql`
-  query ActivityMap {
+  query ActivityMap($activityIdsWithNewTiles: [String]) {
     stravaActivities: allStravaActivity(
       sort: {start_date: ASC}
-      filter: {coordinates: {ne: null}, tiles: {elemMatch: {x: {ne: null}}}}
+      filter: {id: {in: $activityIdsWithNewTiles}}
     ) {
       nodes {
         id
