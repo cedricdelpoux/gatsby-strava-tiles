@@ -14,7 +14,7 @@
     "@urbica/react-map-gl": "^1.16.2",
     "dotenv": "^8.2.0",
     "gatsby": "5.14.0",
-    "gatsby-source-strava": "^4.2.0",
+    "gatsby-source-strava": "^4.3.0",
     "mapbox-gl": "^3.8.0",
     "react": "link:../node_modules/react",
     "react-dom": "link:../node_modules/react-dom",

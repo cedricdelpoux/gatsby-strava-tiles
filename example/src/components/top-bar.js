@@ -106,18 +106,20 @@ export const TopBar = ({settings, onSettingsChange, children}) => {
     >
       {children}
       <div style={{flex: 1}} />
-      <button
-        onClick={() => setIsOpen((open) => !open)}
-        style={{
-          padding: "4px 8px",
-          cursor: "pointer",
-          border: "1px solid #d1d5db",
-          borderRadius: "4px",
-          background: isOpen ? "#f3f4f6" : "#ffffff",
-        }}
-      >
-        ⚙️ Settings
-      </button>
+      {settings && (
+        <button
+          onClick={() => setIsOpen((open) => !open)}
+          style={{
+            padding: "4px 8px",
+            cursor: "pointer",
+            border: "1px solid #d1d5db",
+            borderRadius: "4px",
+            background: isOpen ? "#f3f4f6" : "#ffffff",
+          }}
+        >
+          ⚙️ Settings
+        </button>
+      )}
       {isOpen && <Settings settings={settings} onChange={onSettingsChange} />}
     </div>
   )

@@ -265,6 +265,9 @@ its own, since it holds only what an activity covered _first_, so the page
 recomputes the tiles of the few tracks whose bounding box contains the clicked
 one -- see [`tile-activities.js`](../example/src/tile-activities.js).
 
+[`routes.js`](../example/src/pages/routes.js) draws every route over the
+coverage, with the tiles it would earn.
+
 The [`cards`](./cards.md) documentation covers drawing an activity as an image
 at build time, which uses `tiles` and `outlines` from above.
 
