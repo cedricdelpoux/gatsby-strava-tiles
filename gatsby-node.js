@@ -301,7 +301,7 @@ exports.onCreateNode = async (args, {declutter: declutterOptions}) => {
     if (node.coordinates && node.coordinates.length > 0) {
       activityNodesById.set(node.id, node)
 
-      // A dev-mode refetch, after `onPostBootstrap`
+      // A dev-mode refetch, after `createPages`
       if (hasSourced) {
         recomputeTiles({createNodeField})
         await updateDeclutter(args, declutterOptions)
@@ -324,17 +324,13 @@ exports.onCreateNode = async (args, {declutter: declutterOptions}) => {
   }
 }
 
-// Runs once every plugin has sourced its nodes, before queries. Not
-// `sourceNodes`: exporting it without calling `createNode`, as when the
-// declutter is disabled, triggers Gatsby's "has generated no Gatsby nodes"
-// warning.
-exports.onPostBootstrap = async (args, {declutter: declutterOptions}) => {
-  const {
-    actions: {createNodeField},
-    getNodesByType,
-    reporter,
-  } = args
-
+// Before the site's `createPages`, which Gatsby runs last. Not `sourceNodes`,
+// which warns "has generated no Gatsby nodes" when the declutter is disabled.
+exports.createPages = ({
+  actions: {createNodeField},
+  getNodesByType,
+  reporter,
+}) => {
   try {
     // With Gatsby's cache kept, `onCreateNode` only sees new or changed nodes
     getNodesByType("StravaActivity").forEach((node) => {
@@ -353,10 +349,17 @@ exports.onPostBootstrap = async (args, {declutter: declutterOptions}) => {
     recomputeTiles({createNodeField})
     hasSourced = true
     reporter.success("strava-tiles: tiles computed")
-
-    await updateDeclutter(args, declutterOptions)
   } catch (e) {
     // Only fatal for `gatsby build`, not `gatsby develop`
     reporter.panicOnBuild(`strava-tiles: ${e.message}`, e)
+  }
+}
+
+// Only the page queries read the declutter, and they run after this hook
+exports.onPostBootstrap = async (args, {declutter: declutterOptions}) => {
+  try {
+    await updateDeclutter(args, declutterOptions)
+  } catch (e) {
+    args.reporter.panicOnBuild(`strava-tiles: ${e.message}`, e)
   }
 }
