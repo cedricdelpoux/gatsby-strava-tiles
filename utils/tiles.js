@@ -84,6 +84,23 @@ function pointsToTiles(points, {detectGaps = false} = {}) {
   return uniqueTiles(tiles)
 }
 
+// Every activity crossing each tile, not only the first one
+function getTileActivities(activities) {
+  const tileActivities = {}
+
+  activities.forEach(({id, coordinates}) => {
+    if (!coordinates) return
+
+    pointsToTiles(coordinates).forEach((tile) => {
+      const key = tileKey(tile)
+      if (!tileActivities[key]) tileActivities[key] = []
+      tileActivities[key].push(id)
+    })
+  })
+
+  return tileActivities
+}
+
 // Clockwise, so `(dir + 1) % 4` turns right and `(dir + 3) % 4` left
 const DIRECTIONS = [
   {dx: 1, dy: 0}, // 0 east
@@ -409,5 +426,6 @@ module.exports = {
   uniqueTiles,
   distinctTiles,
   pointsToTiles,
+  getTileActivities,
   tileToCoords,
 }

@@ -28,6 +28,10 @@ an earlier activity already covered.
 }
 ```
 
+`StravaActivity.declutter`, what a map should draw of the activity, is only
+filled when the `declutter` option is set. See the [declutter](./declutter.md)
+documentation.
+
 ## `StravaAthlete.tiles.parts`
 
 The tile coverage across your whole history, split into the largest fully

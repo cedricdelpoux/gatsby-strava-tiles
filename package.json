@@ -36,8 +36,9 @@
     "sharp": ">=0.32.0"
   },
   "scripts": {
-    "lint": "eslint *.js gatsby-node.js utils example/src example/gatsby-node.js",
-    "prepublishOnly": "yarn lint"
+    "lint": "eslint *.js gatsby-node.js utils test example/src example/gatsby-node.js",
+    "test": "node --test",
+    "prepublishOnly": "yarn lint && yarn test"
   },
   "lint-staged": {
     "*.js": [

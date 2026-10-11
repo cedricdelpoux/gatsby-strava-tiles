@@ -54,6 +54,28 @@ history and month by month.
 
 > Read the [data](./docs/data.md) documentation for the full field reference.
 
+## Declutter
+
+Optionally, the plugin can declutter your tracks for a map: hide the
+activities that bring nothing new, cut the parts of a track following a road
+already drawn, and simplify the drawing when zooming out. Each road is then
+drawn only once.
+
+```js
+{
+    resolve: "gatsby-strava-tiles",
+    options: {
+        declutter: {
+            order: "chronological", // or "coverage"
+            filter: (activity) => activity.visibility === "everyone",
+        },
+    },
+}
+```
+
+> Read the [declutter](./docs/declutter.md) documentation. It is disabled by
+> default, since it takes a while on a long history.
+
 ## Activity cards
 
 The plugin can also draw an activity as a single image at build time: the ground
@@ -76,6 +98,7 @@ const {
 
 -   [Data](./docs/data.md), the GraphQL fields this plugin adds and what they mean
 -   [Cards](./docs/cards.md), drawing an activity as an image at build time
+-   [Declutter](./docs/declutter.md), drawing each road of your tracks only once
 
 ## Contributing
 
