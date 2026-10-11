@@ -1,7 +1,7 @@
 # Data
 
-The plugin adds a `tiles` field to the `StravaActivity` and `StravaAthlete`
-nodes created by [gatsby-source-strava][gatsby-source-strava]. All `x`/`y`
+The plugin adds a `tiles` field to the `StravaActivity`, `StravaAthlete` and
+`StravaRoute` nodes created by [gatsby-source-strava][gatsby-source-strava]. All `x`/`y`
 pairs are [slippy map](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames)
 tile coordinates at zoom level 14.
 
@@ -31,6 +31,44 @@ an earlier activity already covered.
 `StravaActivity.declutter`, what a map should draw of the activity, is only
 filled when the `declutter` option is set. See the [declutter](./declutter.md)
 documentation.
+
+## `StravaRoute.tiles`
+
+The tiles of a route, from the `athlete.withRoutes` option of
+[gatsby-source-strava][gatsby-source-strava] (4.3.0 or later).
+
+```graphql
+{
+    allStravaRoute {
+        nodes {
+            id
+            tiles {
+                all {
+                    x
+                    y
+                }
+                new {
+                    x
+                    y
+                }
+            }
+        }
+    }
+}
+```
+
+| Field | Type   | What it is                                                           |
+| ----- | ------ | -------------------------------------------------------------------- |
+| `all` | [Tile] | Every tile the route crosses                                         |
+| `new` | [Tile] | The ones no activity has covered yet, the tiles the route would earn |
+
+They are computed like the tiles of an activity, at zoom 14, except that a
+route has no GPS pauses to detect. `new` is compared with the tiles of every
+activity, so it changes when an activity is added, not only when the route
+does. A tile crossed by two routes is in the `new` of both.
+
+The type is declared upfront like the others: without the `withRoutes` option,
+`allStravaRoute` has no node and the query returns an empty list.
 
 ## `StravaAthlete.tiles.parts`
 

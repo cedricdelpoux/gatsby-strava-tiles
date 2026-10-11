@@ -1,6 +1,8 @@
 const {getActivityTiles} = require("./utils/activity.js")
 const {getAthleteTiles} = require("./utils/athlete.js")
+const {getRouteTiles} = require("./utils/route.js")
 const {declutter, DECLUTTER_ORDERS} = require("./utils/declutter.js")
+const {distinctTiles} = require("./utils/tiles.js")
 
 exports.pluginOptionsSchema = ({Joi}) =>
   Joi.object({
@@ -84,6 +86,12 @@ exports.createSchemaCustomization = ({actions: {createTypes}}) => {
       monthly: [MonthlyTiles]
     }
 
+    # \`new\`: not covered by any activity yet
+    type RouteTiles {
+      all: [Tile]
+      new: [Tile]
+    }
+
     type Declutter implements Node @dontInfer {
       hidden: Boolean!
       reason: String
@@ -103,6 +111,11 @@ exports.createSchemaCustomization = ({actions: {createTypes}}) => {
 }
 
 const declutterNodeId = (activityId) => `declutter-${activityId}`
+
+// A new activity changes the new tiles of a route, but `createNodeField`
+// alone doesn't rerun the queries
+const dependOnEveryActivity = (context) =>
+  context.nodeModel.findAll({type: "StravaActivity", query: {limit: 1}})
 
 // Not `createTypes`: these types belong to gatsby-source-strava, and
 // redefining them logs a conflict warning. `fields.tiles` is what
@@ -130,11 +143,23 @@ exports.createResolvers = ({createResolvers}) => {
         resolve: (source) => source.fields.tiles,
       },
     },
+    StravaRoute: {
+      tiles: {
+        type: "RouteTiles",
+        resolve: async (source, args, context) => {
+          await dependOnEveryActivity(context)
+
+          return source.fields.tiles
+        },
+      },
+    },
   })
 }
 
 const activityNodesById = new Map()
+const routeNodesById = new Map()
 let athleteNode = null
+let isNewTile = () => true
 let hasSourced = false
 
 // New tiles only make sense in chronological order, which Strava doesn't
@@ -167,6 +192,17 @@ function recomputeTiles({createNodeField}) {
 
     createNodeField({node: athleteNode, name: "tiles", value: athleteTiles})
   }
+
+  isNewTile = distinctTiles(tiles)
+  routeNodesById.forEach((node) => updateRouteTiles(node, {createNodeField}))
+}
+
+function updateRouteTiles(node, {createNodeField}) {
+  createNodeField({
+    node,
+    name: "tiles",
+    value: getRouteTiles(node, isNewTile),
+  })
 }
 
 // Gatsby clears this cache when the plugin's version changes
@@ -273,6 +309,16 @@ exports.onCreateNode = async (args, {declutter: declutterOptions}) => {
     }
   }
 
+  if (node.internal.type === "StravaRoute") {
+    routeNodesById.set(node.id, node)
+
+    if (hasSourced) {
+      updateRouteTiles(node, {createNodeField})
+    } else {
+      createNodeField({node, name: "tiles", value: {all: [], new: []}})
+    }
+  }
+
   if (node.internal.type === "StravaAthlete") {
     athleteNode = node
   }
@@ -295,6 +341,10 @@ exports.onPostBootstrap = async (args, {declutter: declutterOptions}) => {
       if (node.coordinates && node.coordinates.length > 0) {
         activityNodesById.set(node.id, node)
       }
+    })
+
+    getNodesByType("StravaRoute").forEach((node) => {
+      routeNodesById.set(node.id, node)
     })
 
     const [athlete] = getNodesByType("StravaAthlete")
