@@ -9,13 +9,8 @@
     computed at build time like the activities' tiles, and the field exists
     even when the site has no route. See the [data](./docs/data.md)
     documentation.
--   `declutter` option, to draw each road only once. It picks the activities
-    to draw, in chronological order or by tile coverage, cuts the parts of a
-    track that follow a road already drawn, and exposes the result as
-    `StravaActivity.declutter`. It is disabled by default. See the
-    [declutter](./docs/declutter.md) documentation.
--   `getTileActivities` and `simplify` are exported, so that a site can write
-    its own track files.
+-   `getTileActivities` is exported, so that a site can write its own index
+    of the activities going through each tile.
 
 ### Changed
 

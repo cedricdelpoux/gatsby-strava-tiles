@@ -28,10 +28,6 @@ an earlier activity already covered.
 }
 ```
 
-`StravaActivity.declutter`, what a map should draw of the activity, is only
-filled when the `declutter` option is set. See the [declutter](./declutter.md)
-documentation.
-
 ## `StravaRoute.tiles`
 
 The tiles of a route, from the `athlete.withRoutes` option of

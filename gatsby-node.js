@@ -1,16 +1,9 @@
 const {getActivityTiles} = require("./utils/activity.js")
 const {getAthleteTiles} = require("./utils/athlete.js")
 const {getRouteTiles} = require("./utils/route.js")
-const {declutter, DECLUTTER_ORDERS} = require("./utils/declutter.js")
 const {distinctTiles} = require("./utils/tiles.js")
 
-exports.pluginOptionsSchema = ({Joi}) =>
-  Joi.object({
-    declutter: Joi.object({
-      order: Joi.string().valid(...DECLUTTER_ORDERS),
-      filter: Joi.function(),
-    }),
-  })
+exports.pluginOptionsSchema = ({Joi}) => Joi.object({})
 
 // Declared explicitly: an inferred type drops from the schema when every
 // sourced `tiles` is empty
@@ -91,26 +84,8 @@ exports.createSchemaCustomization = ({actions: {createTypes}}) => {
       all: [Tile]
       new: [Tile]
     }
-
-    type Declutter implements Node @dontInfer {
-      hidden: Boolean!
-      reason: String
-      tiles: Int
-      newTiles: Int
-      parts: [[[Float!]!]!]
-      stubs: [DeclutterStub!]
-    }
-
-    # Hidden under \`hideUntil\`, dashed under \`dashUntil\`
-    type DeclutterStub {
-      dashUntil: Int!
-      hideUntil: Int!
-      coordinates: [[Float!]!]!
-    }
   `)
 }
-
-const declutterNodeId = (activityId) => `declutter-${activityId}`
 
 // A new activity changes the new tiles of a route, but `createNodeField`
 // alone doesn't rerun the queries
@@ -119,22 +94,13 @@ const dependOnEveryActivity = (context) =>
 
 // Not `createTypes`: these types belong to gatsby-source-strava, and
 // redefining them logs a conflict warning. `fields.tiles` is what
-// `createNodeField` persists, `source.tiles` can be `null`. `nodeModel`
-// makes the page query depend on the `Declutter` node.
+// `createNodeField` persists, `source.tiles` can be `null`.
 exports.createResolvers = ({createResolvers}) => {
   createResolvers({
     StravaActivity: {
       tiles: {
         type: "[Tile]",
         resolve: (source) => source.fields.tiles,
-      },
-      declutter: {
-        type: "Declutter",
-        resolve: (source, args, context) =>
-          context.nodeModel.getNodeById({
-            id: declutterNodeId(source.id),
-            type: "Declutter",
-          }),
       },
     },
     StravaAthlete: {
@@ -205,96 +171,7 @@ function updateRouteTiles(node, {createNodeField}) {
   })
 }
 
-// Gatsby clears this cache when the plugin's version changes
-async function getDeclutterResults(
-  activities,
-  order,
-  {cache, createContentDigest, reporter}
-) {
-  const digest = createContentDigest([
-    order,
-    activities.map((node) => [
-      node.id,
-      node.start_date,
-      node.coordinates.length,
-      node.coordinates[0],
-      node.coordinates[node.coordinates.length - 1],
-    ]),
-  ])
-  const cached = await cache.get("declutter")
-
-  if (cached && cached.digest === digest) return new Map(cached.results)
-
-  const timer = reporter.activityTimer("strava-tiles: declutter the activities")
-
-  timer.start()
-  const results = declutter(activities, {order})
-  timer.end()
-
-  await cache.set("declutter", {digest, results: [...results]})
-
-  return results
-}
-
-// Nodes rather than `createNodeField`, whose changes don't rerun the queries.
-// Stateful nodes, so the obsolete ones are deleted here.
-async function updateDeclutter(args, declutterOptions) {
-  const {
-    actions: {createNode, deleteNode},
-    createContentDigest,
-    getNodesByType,
-    reporter,
-  } = args
-  let results = new Map()
-
-  if (declutterOptions) {
-    const {order = "chronological", filter = () => true} = declutterOptions
-    // Sorted, so the cache digest doesn't depend on the sourcing order
-    const activities = [...activityNodesById.values()]
-      .filter((node) => node.coordinates.length > 1 && filter(node))
-      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-
-    results = await getDeclutterResults(activities, order, args)
-  }
-
-  const nodeIds = new Set()
-
-  results.forEach((value, activityId) => {
-    const id = declutterNodeId(activityId)
-
-    nodeIds.add(id)
-    createNode({
-      ...value,
-      id,
-      internal: {type: "Declutter", contentDigest: createContentDigest(value)},
-    })
-  })
-
-  getNodesByType("Declutter")
-    .filter((node) => !nodeIds.has(node.id))
-    .forEach((node) => deleteNode(node))
-
-  if (declutterOptions) {
-    const hidden = [...results.values()].filter((result) => result.hidden)
-    reporter.success(
-      `strava-tiles: declutter, ${results.size - hidden.length} activities ` +
-        `shown, ${hidden.length} hidden`
-    )
-  }
-}
-
-// Created after sourcing, the `Declutter` nodes would otherwise be deleted as
-// stale at each start. Gatsby 5.12+.
-exports.onPluginInit = ({actions}) => {
-  if (actions.enableStatefulSourceNodes) actions.enableStatefulSourceNodes()
-}
-
-exports.onCreateNode = async (args, {declutter: declutterOptions}) => {
-  const {
-    node,
-    actions: {createNodeField},
-  } = args
-
+exports.onCreateNode = ({node, actions: {createNodeField}}) => {
   if (node.internal.type === "StravaActivity") {
     createNodeField({node, name: "tiles", value: []})
 
@@ -302,10 +179,7 @@ exports.onCreateNode = async (args, {declutter: declutterOptions}) => {
       activityNodesById.set(node.id, node)
 
       // A dev-mode refetch, after `createPages`
-      if (hasSourced) {
-        recomputeTiles({createNodeField})
-        await updateDeclutter(args, declutterOptions)
-      }
+      if (hasSourced) recomputeTiles({createNodeField})
     }
   }
 
@@ -325,7 +199,7 @@ exports.onCreateNode = async (args, {declutter: declutterOptions}) => {
 }
 
 // Before the site's `createPages`, which Gatsby runs last. Not `sourceNodes`,
-// which warns "has generated no Gatsby nodes" when the declutter is disabled.
+// which warns "has generated no Gatsby nodes".
 exports.createPages = ({
   actions: {createNodeField},
   getNodesByType,
@@ -352,14 +226,5 @@ exports.createPages = ({
   } catch (e) {
     // Only fatal for `gatsby build`, not `gatsby develop`
     reporter.panicOnBuild(`strava-tiles: ${e.message}`, e)
-  }
-}
-
-// Only the page queries read the declutter, and they run after this hook
-exports.onPostBootstrap = async (args, {declutter: declutterOptions}) => {
-  try {
-    await updateDeclutter(args, declutterOptions)
-  } catch (e) {
-    args.reporter.panicOnBuild(`strava-tiles: ${e.message}`, e)
   }
 }
