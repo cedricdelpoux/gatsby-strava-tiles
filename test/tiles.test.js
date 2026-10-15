@@ -32,3 +32,23 @@ describe("getTileActivities", () => {
     })
   })
 })
+
+describe("package entry point", () => {
+  it("exports the tiles of an activity and the map and tile helpers", () => {
+    const entry = require("..")
+
+    ;[
+      "getActivityTiles",
+      "pointsToTiles",
+      "getTileActivities",
+      "tileToCoords",
+      "tilesToOutline",
+      "lngToX",
+      "latToY",
+      "xToLng",
+      "yToLat",
+      "distanceInMeters",
+      "Z",
+    ].forEach((name) => assert.ok(name in entry, name))
+  })
+})

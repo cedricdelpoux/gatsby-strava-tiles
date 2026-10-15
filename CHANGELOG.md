@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+-   The package entry point exports the functions behind the tiles:
+    `getActivityTiles`, the functions of `utils/tiles` (`pointsToTiles`,
+    `getTileActivities`, `tilesToOutline`, `tileToCoords`...) and of
+    `utils/map` (`lngToX`, `latToY`, `xToLng`, `yToLat`,
+    `distanceInMeters`...). See the [README](./README.md#helpers).
+
 ## [0.4.0] - 2026-10-11
 
 ### Added

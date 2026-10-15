@@ -54,6 +54,31 @@ history and month by month.
 
 > Read the [data](./docs/data.md) documentation for the full field reference.
 
+## Helpers
+
+The functions behind the tiles are exported, for your own code or for a
+plugin built on the tiles: the tiles an activity covers, the conversions
+between coordinates and tiles, and the outlines of a set of tiles.
+
+```js
+const {
+    getActivityTiles,
+    pointsToTiles,
+    getTileActivities,
+    tilesToOutline,
+    tileToCoords,
+    lngToX,
+    latToY,
+    xToLng,
+    yToLat,
+    distanceInMeters,
+} = require("gatsby-strava-tiles")
+```
+
+> They are also available as `gatsby-strava-tiles/utils/tiles` and
+> `gatsby-strava-tiles/utils/map`, which don't load anything else, for code
+> running in the browser.
+
 ## Activity cards
 
 The plugin can also draw an activity as a single image at build time: the ground
