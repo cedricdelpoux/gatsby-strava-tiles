@@ -3,7 +3,24 @@ const {getAthleteTiles} = require("./utils/athlete.js")
 const {getRouteTiles} = require("./utils/route.js")
 const {distinctTiles} = require("./utils/tiles.js")
 
-exports.pluginOptionsSchema = ({Joi}) => Joi.object({})
+const ROUTE_NODE_TYPE_BY_SOURCE = {
+  strava: "StravaRoute",
+  rideWithGps: "RideWithGpsRoute",
+}
+
+exports.pluginOptionsSchema = ({Joi}) =>
+  Joi.object({
+    // An empty `default()` builds the object from the defaults of its keys
+    routes: Joi.object({
+      strava: Joi.boolean().default(true),
+      rideWithGps: Joi.boolean().default(false),
+    }).default(),
+  })
+
+const getRouteNodeTypes = (pluginOptions) =>
+  Object.entries(ROUTE_NODE_TYPE_BY_SOURCE)
+    .filter(([source]) => pluginOptions.routes[source])
+    .map(([, nodeType]) => nodeType)
 
 // Declared explicitly: an inferred type drops from the schema when every
 // sourced `tiles` is empty
@@ -92,10 +109,26 @@ exports.createSchemaCustomization = ({actions: {createTypes}}) => {
 const dependOnEveryActivity = (context) =>
   context.nodeModel.findAll({type: "StravaActivity", query: {limit: 1}})
 
-// Not `createTypes`: these types belong to gatsby-source-strava, and
+const routeTilesResolver = {
+  type: "RouteTiles",
+  resolve: async (source, args, context) => {
+    await dependOnEveryActivity(context)
+
+    return source.fields.tiles
+  },
+}
+
+// Not `createTypes`: these types belong to the source plugins, and
 // redefining them logs a conflict warning. `fields.tiles` is what
 // `createNodeField` persists, `source.tiles` can be `null`.
-exports.createResolvers = ({createResolvers}) => {
+exports.createResolvers = ({createResolvers}, pluginOptions) => {
+  const routeResolvers = Object.fromEntries(
+    getRouteNodeTypes(pluginOptions).map((nodeType) => [
+      nodeType,
+      {tiles: routeTilesResolver},
+    ])
+  )
+
   createResolvers({
     StravaActivity: {
       tiles: {
@@ -109,16 +142,7 @@ exports.createResolvers = ({createResolvers}) => {
         resolve: (source) => source.fields.tiles,
       },
     },
-    StravaRoute: {
-      tiles: {
-        type: "RouteTiles",
-        resolve: async (source, args, context) => {
-          await dependOnEveryActivity(context)
-
-          return source.fields.tiles
-        },
-      },
-    },
+    ...routeResolvers,
   })
 }
 
@@ -171,7 +195,7 @@ function updateRouteTiles(node, {createNodeField}) {
   })
 }
 
-exports.onCreateNode = ({node, actions: {createNodeField}}) => {
+exports.onCreateNode = ({node, actions: {createNodeField}}, pluginOptions) => {
   if (node.internal.type === "StravaActivity") {
     createNodeField({node, name: "tiles", value: []})
 
@@ -183,7 +207,7 @@ exports.onCreateNode = ({node, actions: {createNodeField}}) => {
     }
   }
 
-  if (node.internal.type === "StravaRoute") {
+  if (getRouteNodeTypes(pluginOptions).includes(node.internal.type)) {
     routeNodesById.set(node.id, node)
 
     if (hasSourced) {
@@ -200,11 +224,10 @@ exports.onCreateNode = ({node, actions: {createNodeField}}) => {
 
 // Before the site's `createPages`, which Gatsby runs last. Not `sourceNodes`,
 // which warns "has generated no Gatsby nodes".
-exports.createPages = ({
-  actions: {createNodeField},
-  getNodesByType,
-  reporter,
-}) => {
+exports.createPages = (
+  {actions: {createNodeField}, getNodesByType, reporter},
+  pluginOptions
+) => {
   try {
     // With Gatsby's cache kept, `onCreateNode` only sees new or changed nodes
     getNodesByType("StravaActivity").forEach((node) => {
@@ -213,9 +236,11 @@ exports.createPages = ({
       }
     })
 
-    getNodesByType("StravaRoute").forEach((node) => {
-      routeNodesById.set(node.id, node)
-    })
+    getRouteNodeTypes(pluginOptions).forEach((nodeType) =>
+      getNodesByType(nodeType).forEach((node) => {
+        routeNodesById.set(node.id, node)
+      })
+    )
 
     const [athlete] = getNodesByType("StravaAthlete")
     if (athlete) athleteNode = athlete

@@ -44,6 +44,33 @@ module.exports = {
 >
 > Checkout [documentation][gatsby-source-strava].
 
+## Options
+
+```js
+module.exports = {
+    plugins: [
+        {
+            resolve: "gatsby-strava-tiles",
+            options: {
+                routes: {
+                    strava: true,
+                    rideWithGps: false,
+                },
+            },
+        },
+    ],
+}
+```
+
+`routes` picks the routes that get a `tiles` field. A key left out keeps its
+default, so `routes: {rideWithGps: true}` adds the RideWithGPS routes and keeps
+the Strava ones.
+
+| Option               | Default | What it does                                                                                         |
+| -------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `routes.strava`      | `true`  | Adds tiles to the `StravaRoute` nodes of [gatsby-source-strava][gatsby-source-strava]                |
+| `routes.rideWithGps` | `false` | Adds tiles to the `RideWithGpsRoute` nodes of [gatsby-source-ridewithgps][gatsby-source-ridewithgps] |
+
 ## Data
 
 The plugin adds a `tiles` field to the `StravaActivity` and `StravaAthlete`
@@ -118,3 +145,4 @@ This project is licensed under the MIT License - see the [LICENCE](./LICENCE.md)
 [npm]: https://www.npmjs.org/package/gatsby-strava-tiles
 [github-issue]: https://github.com/cedricdelpoux/gatsby-strava-tiles/issues/new
 [gatsby-source-strava]: https://github.com/cedricdelpoux/gatsby-source-strava
+[gatsby-source-ridewithgps]: https://github.com/cedricdelpoux/gatsby-source-ridewithgps

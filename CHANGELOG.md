@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+-   A `routes` option picks the routes that get a `tiles` field:
+    `routes.strava` (default `true`) for the `StravaRoute` nodes and
+    `routes.rideWithGps` (default `false`) for the `RideWithGpsRoute` nodes of
+    `gatsby-source-ridewithgps`. A key left out keeps its default. See the
+    [README](./README.md#options).
+
 ## [0.5.0] - 2026-10-15
 
 ### Added

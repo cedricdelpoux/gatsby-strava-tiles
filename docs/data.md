@@ -28,10 +28,13 @@ an earlier activity already covered.
 }
 ```
 
-## `StravaRoute.tiles`
+## `StravaRoute.tiles` and `RideWithGpsRoute.tiles`
 
 The tiles of a route, from the `athlete.withRoutes` option of
-[gatsby-source-strava][gatsby-source-strava] (4.3.0 or later).
+[gatsby-source-strava][gatsby-source-strava] (4.3.0 or later), or from
+[gatsby-source-ridewithgps][gatsby-source-ridewithgps] with the
+`routes.rideWithGps` option. Both have the same fields, and `new` is compared
+with the tiles of the Strava activities in both cases.
 
 ```graphql
 {
@@ -268,3 +271,4 @@ The [`cards`](./cards.md) documentation covers drawing an activity as an image
 at build time, which uses `tiles` and `outlines` from above.
 
 [gatsby-source-strava]: https://github.com/cedricdelpoux/gatsby-source-strava
+[gatsby-source-ridewithgps]: https://github.com/cedricdelpoux/gatsby-source-ridewithgps
